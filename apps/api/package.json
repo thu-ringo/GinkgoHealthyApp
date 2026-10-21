@@ -1,0 +1,43 @@
+{
+  "name": "@healthycheck/api",
+  "private": true,
+  "scripts": {
+    "dev": "tsx watch --env-file=../../.env src/main.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node --env-file=../../.env dist/main.js",
+    "typecheck": "tsc --noEmit",
+    "migrate": "tsx --env-file=../../.env src/migrate.ts",
+    "test": "tsx --test test/*.test.ts",
+    "migrate:status": "tsx --env-file=../../.env src/migrate.ts --status",
+    "migrate:revert": "tsx --env-file=../../.env src/migrate.ts --revert",
+    "seed:demo": "tsx --env-file=../../.env src/seed.ts",
+    "test:integration": "tsx --env-file=../../.env --test test/integration.test.ts"
+  },
+  "dependencies": {
+    "@nestjs/common": "^11.2.7",
+    "@nestjs/core": "^11.2.7",
+    "@nestjs/platform-express": "^11.2.7",
+    "@nestjs/platform-socket.io": "^11.2.7",
+    "@nestjs/websockets": "^11.2.7",
+    "argon2": "^0.44.0",
+    "dotenv": "^17.2.3",
+    "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "luxon": "^3.7.2",
+    "mysql2": "^3.24.6",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2",
+    "socket.io": "^4.8.1",
+    "typeorm": "^0.3.28",
+    "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.3",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/luxon": "^3.7.1",
+    "@types/node": "^22.18.0",
+    "socket.io-client": "^4.8.4",
+    "tsx": "^4.20.6",
+    "typescript": "~5.9.3"
+  }
+}

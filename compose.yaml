@@ -1,0 +1,19 @@
+services:
+  mariadb:
+    image: mariadb:11.8
+    environment:
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD:-local_root_only_change_me}
+      MARIADB_USER: healthycheck
+      MARIADB_PASSWORD: ${MARIADB_PASSWORD:-local_only_change_me}
+      MARIADB_DATABASE: healthycheck
+    ports: ["127.0.0.1:3307:3306"]
+    volumes:
+      - healthycheck_mariadb:/var/lib/mysql
+      - ./infra/mariadb:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+volumes:
+  healthycheck_mariadb:

@@ -1,0 +1,36 @@
+{
+  "expo": {
+    "name": "Ginkgo",
+    "slug": "ginkgo",
+    "scheme": ["ginkgo", "healthycheck"],
+    "icon": "./assets/ginkgo-icon.png",
+    "version": "1.0.0",
+    "orientation": "default",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.healthycheck.student"
+    },
+    "android": {
+      "package": "com.healthycheck.student",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/ginkgo-adaptive.png",
+        "monochromeImage": "./assets/ginkgo-adaptive.png",
+        "backgroundColor": "#E8F3EA"
+      },
+      "permissions": ["POST_NOTIFICATIONS"]
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      "expo-notifications",
+      "expo-sharing",
+      "expo-status-bar",
+      "expo-font"
+    ],
+    "web": {
+      "bundler": "metro",
+      "favicon": "./assets/ginkgo-favicon.png"
+    }
+  }
+}
