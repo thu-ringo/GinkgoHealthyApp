@@ -11,6 +11,7 @@ import {
   View,
   TextInputProps,
   Image,
+  ImageSourcePropType,
 } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { router } from "expo-router";
@@ -105,14 +106,21 @@ export function Page({
   children,
   footer,
   autoScroll = false,
+  horizontalPadding,
+  backgroundColor = C.bg,
 }: {
   children: React.ReactNode;
   footer?: React.ReactNode;
   autoScroll?: boolean;
+  horizontalPadding?: number;
+  backgroundColor?: string;
 }) {
   const scroll = useRef<ScrollView>(null);
   return (
-    <SafeAreaView edges={["top", "left", "right"]} style={styles.page}>
+    <SafeAreaView
+      edges={["top", "left", "right"]}
+      style={[styles.page, { backgroundColor }]}
+    >
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -126,7 +134,10 @@ export function Page({
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.content}
+          contentContainerStyle={[
+            styles.content,
+            horizontalPadding != null ? { paddingHorizontal: horizontalPadding } : null,
+          ]}
         >
           {children}
         </ScrollView>
@@ -171,8 +182,14 @@ export function H({ children }: { children: React.ReactNode }) {
     </Text>
   );
 }
-export function Card({ children }: { children: React.ReactNode }) {
-  return <View style={styles.card}>{children}</View>;
+export function Card({
+  children,
+  style,
+}: {
+  children: React.ReactNode;
+  style?: React.ComponentProps<typeof View>["style"];
+}) {
+  return <View style={[styles.card, style]}>{children}</View>;
 }
 export function Row({ children }: { children: React.ReactNode }) {
   return <View style={styles.row}>{children}</View>;
@@ -181,8 +198,11 @@ export function Field({
   label,
   error,
   style,
+  onFocus,
+  onBlur,
   ...props
 }: TextInputProps & { label: string; error?: string }) {
+  const [focused, setFocused] = useState(false);
   return (
     <View style={{ gap: 7 }}>
       <Text style={styles.label}>{label}</Text>
@@ -191,9 +211,18 @@ export function Field({
         placeholderTextColor={C.muted}
         style={[
           styles.field,
+          focused && { borderColor: C.primary, borderWidth: 1.5 },
           props.multiline ? { minHeight: 100, textAlignVertical: "top" } : null,
           style,
         ]}
+        onFocus={(event) => {
+          setFocused(true);
+          onFocus?.(event);
+        }}
+        onBlur={(event) => {
+          setFocused(false);
+          onBlur?.(event);
+        }}
         {...props}
       />
       {error && (
@@ -211,6 +240,10 @@ export function Button({
   disabled = false,
   icon,
   danger = false,
+  minHeight = 48,
+  accent = C.primary,
+  soft = C.soft,
+  primaryColor = C.primary,
 }: {
   title: string;
   onPress: () => void;
@@ -218,6 +251,10 @@ export function Button({
   disabled?: boolean;
   icon?: React.ComponentProps<typeof Ionicons>["name"];
   danger?: boolean;
+  minHeight?: number;
+  accent?: string;
+  soft?: string;
+  primaryColor?: string;
 }) {
   return (
     <Pressable
@@ -228,8 +265,10 @@ export function Button({
       onPress={onPress}
       style={({ pressed }) => [
         styles.button,
+        { minHeight },
+        !secondary && !danger && { backgroundColor: primaryColor },
         { flexDirection: "row", gap: 8 },
-        secondary && { backgroundColor: C.soft },
+        secondary && { backgroundColor: soft },
         danger && { backgroundColor: "#F8E9E5" },
         (pressed || disabled) && { opacity: 0.55 },
       ]}
@@ -238,13 +277,13 @@ export function Button({
         <Ionicons
           name={icon}
           size={19}
-          color={danger ? C.error : secondary ? C.primary : C.white}
+          color={danger ? C.error : secondary ? accent : C.white}
         />
       )}
       <Text
         style={[
           styles.buttonText,
-          secondary && { color: C.primary },
+          secondary && { color: accent },
           danger && { color: C.error },
           { flexShrink: 1, textAlign: "center" },
         ]}
@@ -256,31 +295,40 @@ export function Button({
 }
 export type IconName = React.ComponentProps<typeof Ionicons>["name"];
 export const kindIcons: Record<string, IconName> = {
-  water: "water-outline",
-  sleep: "moon-outline",
-  weight: "scale-outline",
-  blood_pressure: "pulse-outline",
-  heart_rate: "heart-outline",
-  mood: "happy-outline",
+  water: "water",
+  sleep: "moon",
+  weight: "scale",
+  blood_pressure: "speedometer",
+  heart_rate: "heart",
+  mood: "happy",
   note: "create-outline",
 };
+export const moodLevelIcons: readonly IconName[] = [
+  "sad",
+  "sad-outline",
+  "happy-outline",
+  "happy-outline",
+  "happy",
+];
 export function Icon({
   name,
   tone = C.soft,
   color = C.primary,
   size = 42,
+  circular = false,
 }: {
   name: IconName;
   tone?: string;
   color?: string;
   size?: number;
+  circular?: boolean;
 }) {
   return (
     <View
       style={{
         width: size,
         height: size,
-        borderRadius: size * 0.34,
+        borderRadius: circular ? size / 2 : size * 0.34,
         backgroundColor: tone,
         alignItems: "center",
         justifyContent: "center",
@@ -327,11 +375,13 @@ export function Header({
   subtitle,
   back = false,
   action,
+  size,
 }: {
   title: string;
   subtitle?: string;
   back?: boolean;
   action?: React.ReactNode;
+  size?: "large" | "compact";
 }) {
   return (
     <View style={{ gap: 7 }}>
@@ -356,10 +406,35 @@ export function Header({
             <Text
               accessibilityRole="header"
               style={{
-                fontSize: 22,
-                lineHeight: 29,
-                fontWeight: "600",
+                fontSize: size === "large" ? 34 : 22,
+                lineHeight: size === "large" ? 42 : 29,
+                fontWeight: size === "large" ? "700" : "600",
                 color: C.text,
+              }}
+            >
+              {title}
+            </Text>
+          ) : size === "compact" ? (
+            <Text
+              accessibilityRole="header"
+              style={{
+                fontSize: 24,
+                lineHeight: 32,
+                fontWeight: "700",
+                color: C.text,
+              }}
+            >
+              {title}
+            </Text>
+          ) : size === "large" ? (
+            <Text
+              accessibilityRole="header"
+              style={{
+                fontSize: 34,
+                lineHeight: 42,
+                fontWeight: "700",
+                color: C.text,
+                letterSpacing: -0.8,
               }}
             >
               {title}
@@ -370,7 +445,61 @@ export function Header({
         </View>
         {action}
       </View>
-      {subtitle && <T muted>{subtitle}</T>}
+      {subtitle && (
+        <Text
+          style={{
+            color: size === "large" ? "#3F4A47" : C.muted,
+            fontSize: size === "large" ? 16 : size === "compact" ? 13 : 14,
+            lineHeight: size === "large" ? 24 : size === "compact" ? 19 : 21,
+          }}
+        >
+          {subtitle}
+        </Text>
+      )}
+    </View>
+  );
+}
+export function BrandHeader({
+  title,
+  subtitle,
+  action,
+  logoSource,
+}: {
+  title: string;
+  subtitle: string;
+  action?: React.ReactNode;
+  logoSource?: ImageSourcePropType;
+}) {
+  return (
+    <View
+      style={{
+        minHeight: 72,
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 8,
+      }}
+    >
+      <Image
+        source={logoSource ?? require("../assets/Ginkgo.png")}
+        accessibilityLabel="Logo lá bạch quả Ginkgo"
+        style={{ width: 52, height: 52, borderRadius: 16 }}
+        resizeMode="contain"
+      />
+      <View style={{ flex: 1, gap: 3 }}>
+        <Text
+          accessibilityRole="header"
+          style={{ color: "#075B45", fontSize: 29, fontWeight: "800" }}
+        >
+          {title}
+        </Text>
+        <Text
+          numberOfLines={1}
+          style={{ color: "#62817D", fontSize: 14, lineHeight: 19 }}
+        >
+          {subtitle}
+        </Text>
+      </View>
+      {action}
     </View>
   );
 }
@@ -466,13 +595,18 @@ export function BrandMark({ size = 42 }: { size?: number }) {
         backgroundColor: C.soft,
         alignItems: "center",
         justifyContent: "center",
+        overflow: "hidden",
       }}
     >
       <Image
-        source={require("../assets/ginkgo-mark.png")}
-        resizeMode="contain"
+        source={require("../assets/Ginkgo.png")}
+        resizeMode="cover"
         accessible={false}
-        style={{ width: size * 0.86, height: size * 0.86 }}
+        style={{
+          width: size,
+          height: size,
+          borderRadius: size * 0.32,
+        }}
       />
     </View>
   );
@@ -481,18 +615,33 @@ export function Empty({
   title,
   description,
   icon = "leaf-outline",
+  iconColor = C.primary,
+  iconTone = C.soft,
+  iconSize = 60,
   action,
   art = false,
 }: {
   title: string;
   description: string;
   icon?: IconName;
+  iconColor?: string;
+  iconTone?: string;
+  iconSize?: number;
   action?: React.ReactNode;
   art?: boolean;
 }) {
   return (
     <View style={{ alignItems: "center", paddingVertical: 24, gap: 14 }}>
-      {art ? <Art height={150} /> : <Icon name={icon} size={60} />}
+      {art ? (
+        <Art height={150} />
+      ) : (
+        <Icon
+          name={icon}
+          size={iconSize}
+          color={iconColor}
+          tone={iconTone}
+        />
+      )}
       <H>{title}</H>
       <Text style={[styles.muted, { textAlign: "center", maxWidth: 290 }]}>
         {description}
@@ -507,14 +656,21 @@ export function Disclosure({
   icon = "options-outline",
   children,
   defaultOpen = false,
+  accent,
+  soft,
+  textColor,
 }: {
   title: string;
   subtitle?: string;
   icon?: IconName;
   children: React.ReactNode;
   defaultOpen?: boolean;
+  accent?: string;
+  soft?: string;
+  textColor?: string;
 }) {
   const [open, setOpen] = useState(defaultOpen);
+  const accentColor = accent ?? C.primary;
   return (
     <Card>
       <Pressable
@@ -528,17 +684,29 @@ export function Disclosure({
           minHeight: 48,
         }}
       >
-        <Icon name={icon} />
+        <Icon name={icon} color={accentColor} tone={soft ?? C.soft} />
         <View style={{ flex: 1, gap: 2 }}>
-          <Text style={{ fontSize: 16, fontWeight: "600", color: C.text }}>
+          <Text
+            style={{
+              fontSize: 16,
+              fontWeight: "600",
+              color: textColor ?? C.text,
+            }}
+          >
             {title}
           </Text>
-          {subtitle && <T muted>{subtitle}</T>}
+          {subtitle && (
+            <Text
+              style={{ color: textColor ?? C.muted, fontSize: 14 }}
+            >
+              {subtitle}
+            </Text>
+          )}
         </View>
         <Ionicons
           name={open ? "chevron-up" : "chevron-down"}
           size={18}
-          color={C.muted}
+          color={accentColor}
         />
       </Pressable>
       {open && <View style={{ gap: 16, paddingTop: 8 }}>{children}</View>}

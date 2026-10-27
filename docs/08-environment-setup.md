@@ -4,8 +4,8 @@
 
 ## 1. Hai file khác nhau
 
-- `D:\heathyApp\.env`: cấu hình backend, database và tất cả secret.
-- `D:\heathyApp\apps\mobile\.env`: chỉ có địa chỉ API công khai cho điện thoại, không chứa khóa OpenAI/Twilio/JWT/OTP.
+- `<thu-muc-goc-du-an>\.env`: cấu hình backend, database và tất cả secret.
+- `<thu-muc-goc-du-an>\apps\mobile\.env`: chỉ có địa chỉ API công khai cho điện thoại, không chứa khóa OpenAI/Twilio/JWT/OTP.
 
 Nếu .env đã tồn tại, sửa file đó; không ghi đè bằng file mẫu. `.env.example` là bản hướng dẫn, không phải nguồn credentials dùng thật. Các file `.env` đã được gitignore.
 
@@ -19,7 +19,7 @@ Nếu .env đã tồn tại, sửa file đó; không ghi đè bằng file mẫu.
 | `CORS_ORIGINS` | Địa chỉ trang web được phép gọi API, hiện `http://localhost:8081`. Đây là cổng Expo web, không phải cổng API. Expo Go native không cần thêm origin chỉ vì điện thoại có IP khác. |
 | `JWT_SECRET` | Tự sinh ngẫu nhiên trên máy mình; ít nhất 32 ký tự. Dùng ký access token. |
 | `OTP_PEPPER` | Tự sinh một chuỗi ngẫu nhiên khác với JWT secret; ít nhất 32 ký tự. Dùng HMAC bảo vệ OTP trên server. |
-| `AI_DAILY_LIMIT` | Tự đặt số lượt AI tối đa cho mỗi người dùng/ngày UTC, ví dụ `20`. Không phải 20 USD hay hạn mức thanh toán OpenAI. Lượt gọi provider thất bại cũng có thể được tính. |
+| `AI_DAILY_LIMIT` | Tự đặt số lượt AI tối đa cho mỗi người dùng/ngày UTC, ví dụ `20`. Không phải 20 USD hay hạn mức thanh toán OpenAI. Lượt chỉ được tính khi câu trả lời hoàn tất và lưu thành công; giới hạn theo phút vẫn áp dụng cho các yêu cầu gửi lên. |
 | `TEST_DATABASE_URL` | Tài khoản kết nối database kiểm thử riêng, ví dụ `healthycheck_test`. Hậu tố `_test` là bắt buộc để chạy integration; không trỏ vào database dữ liệu người dùng. |
 | `DEMO_SEED_ENABLED` | Để `false` nếu dùng tài khoản tự đăng ký. Chỉ đổi `true` khi muốn tạo tài khoản demo riêng. |
 | `DEMO_PHONE` | Tự chọn số theo dạng quốc tế chưa được đăng ký trong database, dành riêng cho demo. Seed không gửi SMS. Giá trị mẫu không phải số của bạn. |
@@ -45,7 +45,7 @@ Chép hai dòng kết quả vào `.env`, không chép kết quả vào tài li�
 Nếu muốn mở bản web bằng IP LAN, thêm đúng origin đang dùng, không có dấu cách:
 
 ```dotenv
-CORS_ORIGINS=http://localhost:8081,http://192.168.1.21:8081
+CORS_ORIGINS=http://localhost:8081,http://<IPv4-may-tinh>:8081
 ```
 
 Không dùng `*`, `exp://...` hoặc URL API `:3000` thay cho origin của trang web.
@@ -105,7 +105,7 @@ Phải điền cả key và model. Không copy nguyên chuỗi placeholder. Back
 Trong `apps/mobile/.env`:
 
 ```dotenv
-EXPO_PUBLIC_API_URL=http://192.168.1.21:3000
+EXPO_PUBLIC_API_URL=http://<IPv4-may-tinh>:3000
 ```
 
 Thay IP bằng IPv4 Wi-Fi/LAN của máy chạy API (xem `ipconfig`). Máy tính và điện thoại cùng mạng. Không dùng `localhost` của điện thoại để trỏ máy tính. Kiểm tra trên trình duyệt điện thoại: `http://IP_MAY_TINH:3000/health` phải trả `{"status":"ok"}`.
@@ -113,7 +113,7 @@ Thay IP bằng IPv4 Wi-Fi/LAN của máy chạy API (xem `ipconfig`). Máy tính
 Sau khi sửa `.env` backend, dừng tiến trình API bằng Ctrl+C rồi chạy lại, vì sửa .env không bảo đảm watcher nạp lại môi trường. Không mở thêm một API khác cùng cổng.
 
 ```powershell
-cd D:\heathyApp
+Set-Location "<thu-muc-goc-du-an>"
 docker compose up -d mariadb
 npm run db:migrate
 npm run api
@@ -122,7 +122,7 @@ npm run api
 Ở terminal khác, dừng Metro cũ nếu đang chạy rồi khởi động:
 
 ```powershell
-cd D:\heathyApp\apps\mobile
+Set-Location "<thu-muc-goc-du-an>\apps\mobile"
 npx expo start --go --lan --clear --port 8081
 ```
 

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { AppState, Platform } from "react-native";
+import Constants from "expo-constants";
 import * as SecureStore from "expo-secure-store";
 import { QueryClient, focusManager } from "@tanstack/react-query";
 import { io, Socket } from "socket.io-client";
@@ -10,7 +11,15 @@ export const queryClient = new QueryClient({
     mutations: { retry: false },
   },
 });
-export const API = process.env.EXPO_PUBLIC_API_URL || "http://localhost:3000";
+const configuredApi = process.env.EXPO_PUBLIC_API_URL?.trim();
+const expoHost = Constants.expoConfig?.hostUri?.split(":")[0];
+const inferredApi =
+  Platform.OS === "web"
+    ? "http://localhost:3000"
+    : expoHost && expoHost !== "localhost" && expoHost !== "127.0.0.1"
+      ? `http://${expoHost}:3000`
+      : "";
+export const API = configuredApi || inferredApi;
 let access = "",
   refresh = "",
   socket: Socket | undefined,
@@ -90,6 +99,11 @@ export async function api<T = any>(
     public?: boolean;
   } = {},
 ): Promise<T> {
+  if (!API)
+    throw new ApiError(
+      "Chưa xác định được địa chỉ API. Hãy cấu hình EXPO_PUBLIC_API_URL cho thiết bị này.",
+      0,
+    );
   const generation = epoch;
   const request = () =>
     fetch(`${API}${path}`, {
@@ -143,6 +157,7 @@ export async function api<T = any>(
   return data;
 }
 function connectSocket() {
+  if (!API) return;
   const connectionEpoch = epoch;
   socket = io(API, {
     auth: { token: access },

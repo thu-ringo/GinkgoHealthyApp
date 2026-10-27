@@ -14,9 +14,13 @@
     "db:status": "npm run migrate:status -w apps/api",
     "db:revert": "npm run migrate:revert -w apps/api",
     "seed:demo": "npm run seed:demo -w apps/api",
-    "test:integration": "npm run test:integration -w apps/api"
+    "test:integration": "npm run test:integration -w apps/api",
+    "lint": "expo lint"
   },
   "engines": {
     "node": ">=22.13"
+  },
+  "dependencies": {
+    "@react-native-community/datetimepicker": "9.1.0"
   }
 }
