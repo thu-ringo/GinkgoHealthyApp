@@ -58,3 +58,5 @@ Chuyển sang dữ liệu thật cần môi trường/database riêng, `NODE_ENV
 Lưu `OPENAI_API_KEY` và `OPENAI_MODEL` vào file riêng `../demo-runtime/ai.env`, ngoài repo. Launcher đọc file này và truyền vào backend; không đưa khóa vào Vercel, APK hoặc biến `EXPO_PUBLIC_*`. `scripts/demo-api.mjs` nạp lại cấu hình này khi API khởi động.
 
 Model đã chọn là `gpt-6-luna`. Khóa cần hợp lệ, có quyền gọi model và tài khoản còn credits. Sau khi thay cấu hình, khởi động lại API; không cần build lại APK. Khóa từng được đưa vào repo công khai cần được thay thế.
+
+`scripts/restart-demo-api.mjs` nạp lại riêng backend từ cấu hình riêng của máy, kiểm tra PID là `node.exe` trước khi dừng và giữ nguyên database/tunnel. Khi shell của Codex không nhìn thấy tiến trình host, người dùng cần chạy launcher `Restart-Ginkgo-AI.cmd` bên ngoài sandbox.
