@@ -13,6 +13,7 @@ const bin = process.env.MARIADB_BIN || 'D:\\MariaDB 13.0.2\\bin';
 const tunnelExe = path.resolve(root, '..', 'tools', 'cloudflared.exe');
 const dataDir = path.join(stateDir, 'mariadb');
 const port = 33307;
+const apiPort = Number(process.env.GINKGO_DEMO_API_PORT || 3000);
 const children = [];
 fs.mkdirSync(stateDir, { recursive: true });
 fs.mkdirSync(path.join(stateDir, 'tmp'), { recursive: true });
@@ -28,7 +29,7 @@ const aiConfig = fs.existsSync(aiFile) ? parseEnv(fs.readFileSync(aiFile, 'utf8'
 const env = {
   ...process.env,
   NODE_ENV: 'development',
-  PORT: '3000',
+  PORT: String(apiPort),
   DATABASE_URL: `mysql://ginkgo_demo:${secrets.dbPassword}@127.0.0.1:${port}/ginkgo_demo`,
   DATABASE_SSL: 'false',
   JWT_SECRET: secrets.jwt,
@@ -78,7 +79,7 @@ try {
     let running = false;
     try {
       process.kill(previousStatus.apiPid, 0);
-      running = (await fetch('http://127.0.0.1:3000/health', { signal: AbortSignal.timeout(2000) })).ok;
+      running = (await fetch(`http://127.0.0.1:${previousStatus.apiPort || 3000}/health`, { signal: AbortSignal.timeout(2000) })).ok;
     } catch {}
     if (running) throw new Error(`Demo already running: ${previousStatus.apiUrl}. Keep the existing demo process open.`);
   }
@@ -119,12 +120,12 @@ try {
   runNode('apps/api/dist/seed.js');
   start(process.execPath, ['scripts/demo-api.mjs'], 'api.log');
   for (let attempt = 0; ; attempt++) {
-    try { const health = await fetch('http://127.0.0.1:3000/health'); if (health.ok) break; } catch {}
+    try { const health = await fetch(`http://127.0.0.1:${apiPort}/health`); if (health.ok) break; } catch {}
     if (attempt > 45) throw new Error('API healthcheck failed. See api.log');
     await new Promise(resolve => setTimeout(resolve, 1000));
   }
   console.log('Dedicated MariaDB and API are ready. Starting Cloudflare Tunnel...');
-  const tunnel = start(tunnelExe, ['tunnel', '--url', 'http://127.0.0.1:3000', '--protocol', 'http2', '--no-autoupdate'], 'tunnel.log', { stdio: ['ignore', 'pipe', 'pipe'] });
+  const tunnel = start(tunnelExe, ['tunnel', '--url', `http://127.0.0.1:${apiPort}`, '--protocol', 'http2', '--no-autoupdate'], 'tunnel.log', { stdio: ['ignore', 'pipe', 'pipe'] });
   let discovered = false;
   const receive = chunk => {
     const message = chunk.toString();
@@ -135,7 +136,7 @@ try {
     fs.mkdirSync(path.join(root, 'apps/mobile/public'), { recursive: true });
     fs.writeFileSync(path.join(root, 'apps/mobile/public/demo-api.json'), JSON.stringify({ apiUrl, updatedAt: new Date().toISOString() }));
     fs.writeFileSync(path.join(root, 'apps/mobile/.env.local'), `EXPO_PUBLIC_API_URL=${apiUrl}\nEXPO_PUBLIC_API_CONFIG_URL=https://ginkgo-healthy-app.vercel.app/demo-api.json\nEXPO_PUBLIC_DEMO_MODE=true\n`);
-    fs.writeFileSync(path.join(stateDir, 'status.json'), JSON.stringify({ apiUrl, apiPid: children[1]?.pid, dbPid: dbProcess.pid, tunnelPid: tunnel.pid, databasePort: port, startedAt: new Date().toISOString() }));
+    fs.writeFileSync(path.join(stateDir, 'status.json'), JSON.stringify({ apiUrl, apiPid: children[1]?.pid, apiPort, dbPid: dbProcess.pid, tunnelPid: tunnel.pid, databasePort: port, startedAt: new Date().toISOString() }));
     console.log(`DEMO_API_URL=${apiUrl}`);
     console.log('Keep this process and the computer running while testing.');
     if (process.argv.includes('--publish')) publish(apiUrl);

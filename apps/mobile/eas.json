@@ -7,7 +7,7 @@
       "distribution": "internal",
       "environment": "preview",
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://met-liberal-friendship-relying.trycloudflare.com",
+        "EXPO_PUBLIC_API_URL": "https://price-subscribe-assessed-contacting.trycloudflare.com",
         "EXPO_PUBLIC_API_CONFIG_URL": "https://ginkgo-healthy-app.vercel.app/demo-api.json",
         "EXPO_PUBLIC_DEMO_MODE": "true"
       },

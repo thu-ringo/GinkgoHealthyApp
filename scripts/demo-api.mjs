@@ -15,6 +15,7 @@ const statusPath = path.join(stateDir, 'status.json');
 if (fs.existsSync(statusPath)) {
   const status = JSON.parse(fs.readFileSync(statusPath, 'utf8'));
   status.apiPid = process.pid;
+  status.apiPort = Number(process.env.PORT || 3000);
   fs.writeFileSync(statusPath, JSON.stringify(status));
 }
 console.log('Ginkgo demo API ready; AI configuration loaded from private local file.');

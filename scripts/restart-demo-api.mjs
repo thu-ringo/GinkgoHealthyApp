@@ -19,7 +19,7 @@ await new Promise(resolve => setTimeout(resolve, 1200));
 const log = fs.openSync(path.join(stateDir, 'api.log'), 'a');
 const child = spawn(process.execPath, ['scripts/demo-api.mjs'], {
   cwd: root,
-  env: { ...process.env, ...base },
+  env: { ...process.env, ...base, PORT: String(status.apiPort || base.PORT || 3000) },
   detached: true,
   windowsHide: true,
   stdio: ['ignore', log, log],
@@ -29,7 +29,7 @@ child.unref();
 let ready = false;
 for (let attempt = 0; attempt < 30; attempt++) {
   try {
-    const r = await fetch('http://127.0.0.1:3000/health', { signal: AbortSignal.timeout(1500) });
+    const r = await fetch(`http://127.0.0.1:${status.apiPort || 3000}/health`, { signal: AbortSignal.timeout(1500) });
     if (r.ok) { ready = true; break; }
   } catch {}
   await new Promise(resolve => setTimeout(resolve, 500));

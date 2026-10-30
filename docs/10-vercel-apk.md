@@ -2,7 +2,7 @@
 
 Web: https://ginkgo-healthy-app.vercel.app
 
-Web và APK gọi NestJS qua HTTPS `*.trycloudflare.com`. API và MariaDB chạy trên máy tính của người triển khai. Đây là bản demo học tập: chỉ dùng dữ liệu giả và OTP thử `123456`, không gửi SMS thật. AI chưa có khóa mới nên chưa trả lời AI thật.
+Web và APK gọi NestJS qua HTTPS `*.trycloudflare.com`. API và MariaDB chạy trên máy tính của người triển khai. Đây là bản demo học tập: chỉ dùng dữ liệu giả và OTP thử `123456`, không gửi SMS thật. AI cần khóa hợp lệ và tài khoản API còn credits.
 
 Máy tính cần bật, có mạng, không ngủ và tiến trình demo phải còn chạy. Đây không phải hosting luôn bật. Không tạo dịch vụ cloud trả phí.
 
@@ -12,7 +12,7 @@ Máy tính cần bật, có mạng, không ngủ và tiến trình demo phải c
 
 Thông tin riêng lưu tại `../demo-runtime/secrets.json` và `../demo-runtime/.env`, ngoài repo. Không đưa các file này lên GitHub. `ginkgo_demo` chứa dữ liệu demo; `ginkgo_demo_test` dành riêng cho integration test.
 
-Script chạy migration đã biên dịch, seed demo, API cổng 3000 và cloudflared. Cần cloudflared chính thức tại `../tools/cloudflared.exe`, Node.js và `npm ci`, `npm run build` trước lần chạy đầu.
+Script chạy migration đã biên dịch, seed demo, API mặc định cổng 3000 (đổi bằng `GINKGO_DEMO_API_PORT`) và cloudflared. Cần cloudflared chính thức tại `../tools/cloudflared.exe`, Node.js và `npm ci`, `npm run build` trước lần chạy đầu.
 
 Từ gốc repo:
 
@@ -26,7 +26,7 @@ Giữ tiến trình đó chạy khi demo. `--publish` tìm Vercel CLI trong npm 
 
 Script ghi URL công khai vào `apps/mobile/public/demo-api.json`, tạo `.env.local` cho mobile và cập nhật Vercel khi có `--publish`.
 
-Profile `preview` trong `apps/mobile/eas.json` tạo APK độc lập, bật nhãn demo và đặt `EXPO_PUBLIC_API_CONFIG_URL=https://ginkgo-healthy-app.vercel.app/demo-api.json`. Khi khởi động, app tải cấu hình đó với `no-store`, chỉ chấp nhận HTTPS origin thuộc `*.trycloudflare.com`, không có credentials, query hoặc đường dẫn tùy ý. Khi Vercel đã cập nhật, đóng hẳn và mở lại APK để lấy URL mới; không cần cài lại APK chỉ vì tunnel đổi địa chỉ.
+Profile `preview` trong `apps/mobile/eas.json` tạo APK độc lập và đặt `EXPO_PUBLIC_API_CONFIG_URL=https://ginkgo-healthy-app.vercel.app/demo-api.json`. Khi khởi động, app tải cấu hình đó với `no-store`, chỉ chấp nhận HTTPS origin thuộc `*.trycloudflare.com`, không có credentials, query hoặc đường dẫn tùy ý. Khi Vercel đã cập nhật, đóng hẳn và mở lại APK để lấy URL mới; không cần cài lại APK chỉ vì tunnel đổi địa chỉ. Dòng banner demo đã được bỏ khỏi giao diện web/mã nguồn theo yêu cầu; cờ cấu hình runtime vẫn được giữ để APK nhận URL mới.
 
 Không lưu secret trong `EXPO_PUBLIC_*` hoặc `demo-api.json`.
 
