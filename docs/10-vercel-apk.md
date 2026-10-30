@@ -52,3 +52,9 @@ Keystore do Expo quản lý trong tài khoản `thuringo`. Không cần CH Play 
 - Cần cài APK lên Android thật để kiểm tra quyền thông báo, nhắc thuốc và hành vi khi đóng app.
 
 Chuyển sang dữ liệu thật cần môi trường/database riêng, `NODE_ENV=production`, SMS thật, tắt OTP dev/nhãn demo và hosting thích hợp.
+
+## Bật trợ lý bằng tài khoản OpenAI của người triển khai
+
+Lưu `OPENAI_API_KEY` và `OPENAI_MODEL` vào file riêng `../demo-runtime/ai.env`, ngoài repo. Launcher đọc file này và truyền vào backend; không đưa khóa vào Vercel, APK hoặc biến `EXPO_PUBLIC_*`. `scripts/demo-api.mjs` nạp lại cấu hình này khi API khởi động.
+
+Model đã chọn là `gpt-6-luna`. Khóa cần hợp lệ, có quyền gọi model và tài khoản còn credits. Sau khi thay cấu hình, khởi động lại API; không cần build lại APK. Khóa từng được đưa vào repo công khai cần được thay thế.

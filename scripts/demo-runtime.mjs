@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import os from 'node:os';
+import { parseEnv } from 'node:util';
 import mysql from 'mysql2/promise';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -22,6 +23,8 @@ const secrets = fs.existsSync(secretPath)
   ? JSON.parse(fs.readFileSync(secretPath, 'utf8'))
   : Object.fromEntries(['rootPassword', 'dbPassword', 'jwt', 'otpPepper', 'demoPassword'].map(key => [key, randomBytes(32).toString('hex')]));
 if (!fs.existsSync(secretPath)) fs.writeFileSync(secretPath, JSON.stringify(secrets));
+const aiFile = path.join(stateDir, 'ai.env');
+const aiConfig = fs.existsSync(aiFile) ? parseEnv(fs.readFileSync(aiFile, 'utf8')) : {};
 const env = {
   ...process.env,
   NODE_ENV: 'development',
@@ -37,7 +40,8 @@ const env = {
   DEMO_SEED_ENABLED: 'true',
   DEMO_PHONE: '+84900000001',
   DEMO_PASSWORD: secrets.demoPassword,
-  OPENAI_API_KEY: '',
+  OPENAI_API_KEY: aiConfig.OPENAI_API_KEY?.trim() || '',
+  OPENAI_MODEL: aiConfig.OPENAI_MODEL?.trim() || '',
 };
 function start(exe, args, logName, extra = {}) {
   const log = fs.openSync(path.join(stateDir, logName), 'a');
@@ -109,11 +113,11 @@ try {
   await connection.query("ALTER USER 'root'@'localhost' IDENTIFIED BY ?", [secrets.rootPassword]);
   await connection.end();
   fs.writeFileSync(path.join(stateDir, 'initialized'), 'Dedicated demo database; no existing databases were modified.');
-  const envFile = Object.entries(env).filter(([key]) => ['NODE_ENV','PORT','DATABASE_URL','DATABASE_SSL','JWT_SECRET','OTP_PEPPER','SMS_PROVIDER','DEV_OTP_ENABLED','DEV_OTP_CODE','CORS_ORIGINS','DEMO_SEED_ENABLED','DEMO_PHONE','DEMO_PASSWORD','OPENAI_API_KEY'].includes(key)).map(([key,value]) => `${key}=${value}`).join('\n');
+  const envFile = Object.entries(env).filter(([key]) => ['NODE_ENV','PORT','DATABASE_URL','DATABASE_SSL','JWT_SECRET','OTP_PEPPER','SMS_PROVIDER','DEV_OTP_ENABLED','DEV_OTP_CODE','CORS_ORIGINS','DEMO_SEED_ENABLED','DEMO_PHONE','DEMO_PASSWORD'].includes(key)).map(([key,value]) => `${key}=${value}`).join('\n');
   fs.writeFileSync(path.join(stateDir, '.env'), envFile + `\nTEST_DATABASE_URL=mysql://ginkgo_demo:${secrets.dbPassword}@127.0.0.1:${port}/ginkgo_demo_test\n`);
   runNode('apps/api/dist/migrate.js');
   runNode('apps/api/dist/seed.js');
-  start(process.execPath, ['apps/api/dist/main.js'], 'api.log');
+  start(process.execPath, ['scripts/demo-api.mjs'], 'api.log');
   for (let attempt = 0; ; attempt++) {
     try { const health = await fetch('http://127.0.0.1:3000/health'); if (health.ok) break; } catch {}
     if (attempt > 45) throw new Error('API healthcheck failed. See api.log');
