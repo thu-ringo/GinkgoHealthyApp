@@ -1,81 +1,54 @@
-# Bản web Vercel và APK cài thử
+# Ginkgo demo: Vercel, Cloudflare Tunnel và APK
 
-## Điều kiện kết nối
+Web: https://ginkgo-healthy-app.vercel.app
 
-Vercel triển khai giao diện Expo web. Backend NestJS (bao gồm Socket.IO) và MariaDB cần triển khai riêng. Không đưa database hoặc các secret vào frontend.
+Web và APK gọi NestJS qua HTTPS `*.trycloudflare.com`. API và MariaDB chạy trên máy tính của người triển khai. Đây là bản demo học tập: chỉ dùng dữ liệu giả và OTP thử `123456`, không gửi SMS thật. AI chưa có khóa mới nên chưa trả lời AI thật.
 
-Để dùng cả web và APK online, cần API công khai qua HTTPS. `http://192.168.1.10:3000` trong tài liệu là ví dụ LAN, không phải API online. Cấu hình CORS của backend cho phép đúng origin Vercel sau khi biết tên miền.
+Máy tính cần bật, có mạng, không ngủ và tiến trình demo phải còn chạy. Đây không phải hosting luôn bật. Không tạo dịch vụ cloud trả phí.
 
-Bản release không tự suy ra API localhost. Đặt `EXPO_PUBLIC_API_URL` trước khi build; biến này được nhúng vào bundle. Đổi URL cần build lại.
+## Chạy demo
 
-## Vercel
+`scripts/demo-runtime.mjs` dùng MariaDB có sẵn tại `D:\MariaDB 13.0.2\bin` (có thể đổi bằng `MARIADB_BIN`). Nó tạo data directory riêng tại `../demo-runtime/mariadb`, cổng **33307**, chỉ bind **127.0.0.1**, với user/mật khẩu ngẫu nhiên riêng. Không sửa database/dịch vụ MariaDB đang có.
 
-1. Đăng nhập bằng `npx vercel@latest login` tại thư mục gốc repo.
-2. Liên kết dự án bằng `npx vercel@latest link`.
-3. Thêm biến `EXPO_PUBLIC_API_URL` với URL HTTPS thực tế: `npx vercel@latest env add EXPO_PUBLIC_API_URL production`.
-4. Chạy `npx vercel@latest --prod` từ thư mục gốc repo.
+Thông tin riêng lưu tại `../demo-runtime/secrets.json` và `../demo-runtime/.env`, ngoài repo. Không đưa các file này lên GitHub. `ginkgo_demo` chứa dữ liệu demo; `ginkgo_demo_test` dành riêng cho integration test.
 
-`vercel.json` đã cấu hình npm workspaces, lệnh `npm run build:web`, đầu ra `apps/mobile/dist` và fallback cho Expo Router. Nếu import GitHub bằng dashboard, chọn Root Directory là gốc repo, không phải `apps/mobile`.
+Script chạy migration đã biên dịch, seed demo, API cổng 3000 và cloudflared. Cần cloudflared chính thức tại `../tools/cloudflared.exe`, Node.js và `npm ci`, `npm run build` trước lần chạy đầu.
 
-## Backend online
+Từ gốc repo:
 
-`Dockerfile.api` đóng gói riêng NestJS cho máy chủ/container có hỗ trợ WebSocket và kết nối MariaDB. Đây là cấu hình chuẩn bị; chưa tạo dịch vụ cloud hoặc database.
+```powershell
+node scripts/demo-runtime.mjs --publish
+```
 
-1. Build từ gốc repo: `docker build -f Dockerfile.api -t ginkgo-api .`.
-2. Tạo MariaDB có lưu trữ bền vững, cấu hình `DATABASE_URL` truy cập được từ API. Ưu tiên mạng riêng giữa API và database.
-3. Đặt secret qua trang cấu hình dịch vụ hoặc file `.env.production` ngoài Git: `NODE_ENV=production`, `DATABASE_URL`, hai secret ngẫu nhiên khác nhau `JWT_SECRET`/`OTP_PEPPER`, `SMS_PROVIDER=twilio`, `DEV_OTP_ENABLED=false`, thông tin Twilio, `CORS_ORIGINS` là origin web chính xác. Khóa AI là tùy chọn nhưng cần khóa hợp lệ nếu dùng trợ lý.
-4. Chạy migration riêng: `docker run --rm --env-file .env.production ginkgo-api node apps/api/dist/migrate.js` (database phải truy cập được từ container).
-5. Khởi chạy API với cùng biến môi trường; expose cổng 3000 qua HTTPS của nhà cung cấp hoặc reverse proxy. Kiểm tra `/health` trả `{"status":"ok"}`.
-6. Dùng URL HTTPS đó cho Vercel và EAS. Thiết lập backup database trên máy chủ/nhà cung cấp trước khi lưu dữ liệu cần giữ.
+Giữ tiến trình đó chạy khi demo. `--publish` tìm Vercel CLI trong npm cache trên máy và dùng phiên đăng nhập hiện có để cập nhật web. Có thể bỏ cờ này nếu tự deploy riêng.
 
-Không dùng giá trị secret mẫu hoặc OTP dev cho dịch vụ công khai. Không có thông tin Twilio thì chức năng gửi SMS thật chưa hoạt động.
+## URL tunnel thay đổi
 
-### Railway
+Script ghi URL công khai vào `apps/mobile/public/demo-api.json`, tạo `.env.local` cho mobile và cập nhật Vercel khi có `--publish`.
 
-- API: deploy từ thư mục gốc với `railway.json` và `Dockerfile.api`. Migration chạy ở bước pre-deploy; healthcheck `/health` xác nhận kết nối database.
-- Database: dùng image `mariadb:11.8`, gắn volume bền vững tại `/var/lib/mysql`; tạo database `healthycheck` và user riêng qua biến `MARIADB_DATABASE`, `MARIADB_USER`, `MARIADB_PASSWORD`, `MARIADB_ROOT_PASSWORD`.
-- API kết nối database qua private networking, cổng 3306. Không tạo public TCP proxy cho database.
-- Tạo domain HTTPS cho API; đặt `CORS_ORIGINS=https://ginkgo-healthy-app.vercel.app`.
-- Đặt `EXPO_PUBLIC_API_URL` cùng URL HTTPS vào Vercel production và EAS preview, rồi build lại cả hai.
-- Dịch vụ chỉ được tạo sau khi xác nhận kết nối tài khoản. Kiểm tra credits/plan trong tài khoản; không tự nâng cấp gói trả phí.
+Profile `preview` trong `apps/mobile/eas.json` tạo APK độc lập, bật nhãn demo và đặt `EXPO_PUBLIC_API_CONFIG_URL=https://ginkgo-healthy-app.vercel.app/demo-api.json`. Khi khởi động, app tải cấu hình đó với `no-store`, chỉ chấp nhận HTTPS origin thuộc `*.trycloudflare.com`, không có credentials, query hoặc đường dẫn tùy ý. Khi Vercel đã cập nhật, đóng hẳn và mở lại APK để lấy URL mới; không cần cài lại APK chỉ vì tunnel đổi địa chỉ.
 
-### Bản demo online theo yêu cầu
+Không lưu secret trong `EXPO_PUBLIC_*` hoặc `demo-api.json`.
 
-Đây là môi trường thử riêng, không phải môi trường tiếp nhận dữ liệu sức khỏe thật. Người dùng đã chọn OTP thử khi chưa có Twilio.
+## Web và APK
 
-- Backend: `NODE_ENV=development`, `SMS_PROVIDER=dev`, `DEV_OTP_ENABLED=true` và mã thử 6 chữ số được cấu hình trên server. Giữ JWT/OTP pepper ngẫu nhiên, riêng cho môi trường demo.
-- Web/APK: `EXPO_PUBLIC_DEMO_MODE=true` để hiện nhãn demo. Hướng dẫn người thử dùng số và dữ liệu giả, cùng mã OTP thử đã thông báo.
-- Chưa có OpenAI key mới hợp lệ thì trợ lý sẽ báo chưa được cấu hình; không mô phỏng câu trả lời AI thành công.
-- Khi chuyển sang dùng thật: tạo môi trường/database riêng, `NODE_ENV=production`, SMS thật, tắt demo và OTP dev; không tái sử dụng tài khoản hoặc dữ liệu thử.
+`vercel.json` cấu hình build Expo web, SPA fallback và không cache cấu hình tunnel. Root Directory là gốc repo. Tự deploy cần ba build env: `EXPO_PUBLIC_API_URL` là tunnel hiện tại, `EXPO_PUBLIC_API_CONFIG_URL` như trên và `EXPO_PUBLIC_DEMO_MODE=true`.
 
-### Render + MariaDB Cloud (phương án thay thế Railway)
+Tại `apps/mobile`, đăng nhập Expo rồi chạy:
 
-Railway đã từ chối đăng ký mới trong lần triển khai này. Phương án thay thế giữ nguyên NestJS và MariaDB:
+```powershell
+npx eas-cli@latest build --platform android --profile preview
+```
 
-- Render: `render.yaml` khai báo API Docker, gói Free, Singapore, migration trước khi khởi động và healthcheck `/health`. Không dùng ổ đĩa tạm của Render để lưu database.
-- MariaDB Cloud: chọn Free Developer Tier serverless khi có trong tài khoản, không chọn database trả phí. Free tier hiện giới hạn 10 MCU-hours/tháng; database tạm dừng khi hết hạn mức.
-- Điền `DATABASE_URL` bằng thông tin kết nối thực tế, URL-encode mật khẩu nếu cần. `DATABASE_SSL=true` bật TLS và luôn xác minh chứng chỉ server. Nếu nhà cung cấp yêu cầu CA riêng, thêm PEM vào `DATABASE_SSL_CA` với newline thật; không tắt xác minh chứng chỉ.
-- Cho phép IP outbound của dịch vụ Render trong allowlist MariaDB Cloud, theo thông tin thực tế của hai dịch vụ.
-- API demo dùng OTP thử `123456`, không gửi SMS thật; chỉ dùng dữ liệu giả.
-- Render Free tạm ngủ sau thời gian không hoạt động; lần truy cập lại có thể chậm. Chỉ báo triển khai thành công sau khi `/health` và luồng tài khoản/lưu dữ liệu đã được thử.
+Keystore do Expo quản lý trong tài khoản `thuringo`. Không cần CH Play hoặc Expo Go. Khi Git clone local bị chặn trên Windows, EAS hỗ trợ `EAS_NO_VCS=1` và `EAS_PROJECT_ROOT` trỏ tới gốc repo; đây là cách đóng gói đã dùng. Dùng temp trong workspace nếu công cụ native không ghi được vào sandbox temp.
 
-## APK qua EAS
+## Kiểm tra
 
-1. Vào `apps/mobile`, chạy `npx eas-cli@latest login`.
-2. Chạy `npx eas-cli@latest init` để liên kết với dự án Expo của bạn.
-3. Tạo biến API ở môi trường preview: `npx eas-cli@latest env:create --environment preview --name EXPO_PUBLIC_API_URL --visibility plaintext --value https://YOUR-REAL-API-HOST` (thay URL trước khi chạy).
-4. Chạy `npx eas-cli@latest build --platform android --profile preview`.
-5. Nếu đây là bản đầu tiên và chưa có khóa ký Android, chọn tạo keystore trên EAS. Giữ khóa để cập nhật cùng ứng dụng về sau.
-6. Tải file `.apk` từ bản build thành công, chuyển sang điện thoại và cho phép cài đặt từ nguồn này khi Android yêu cầu.
+- API/mobile typecheck và Expo lint đạt; API build thành công.
+- 15 unit test đạt; integration riêng trên MariaDB test: 15 test/subtest đạt.
+- Hai kiểm thử cấu hình runtime đạt, gồm từ chối credentials và host ngoài tunnel.
+- Bundle Android/Hermes xuất được.
+- API công khai: health, đăng nhập demo, hồ sơ có xác thực và đăng xuất hoạt động.
+- Cần cài APK lên Android thật để kiểm tra quyền thông báo, nhắc thuốc và hành vi khi đóng app.
 
-Profile preview tạo APK độc lập, không yêu cầu Expo Go hoặc Metro, và không đăng lên CH Play. Backend vẫn phải hoạt động để đăng nhập và dùng dữ liệu.
-
-## Kiểm tra bản cuối
-
-- `npm run typecheck`
-- Trong `apps/mobile`: `npm run lint`
-- Tại gốc: `npm test` và `npm run build:web`
-- Kiểm tra trình duyệt: onboarding, đăng nhập, ghi dữ liệu, tải lại URL trực tiếp.
-- Kiểm tra Android thật: đăng nhập, lưu dữ liệu, quyền thông báo, nhắc thuốc khi app đóng và mở lại app.
-
-Chỉ kiểm tra unit test không xác nhận kết nối MariaDB, SMS hoặc AI; cần chạy integration test với database test và thử các dịch vụ thực tế trước khi báo đã kiểm chứng các chức năng này.
+Chuyển sang dữ liệu thật cần môi trường/database riêng, `NODE_ENV=production`, SMS thật, tắt OTP dev/nhãn demo và hosting thích hợp.

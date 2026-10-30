@@ -5,6 +5,7 @@ import * as SecureStore from "expo-secure-store";
 import { QueryClient, focusManager } from "@tanstack/react-query";
 import { io, Socket } from "socket.io-client";
 import { clearReminders } from "./notifications";
+import { demoApiEndpoint } from "./api-endpoint";
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: { retry: 1, staleTime: 15000, gcTime: 300000 },
@@ -21,7 +22,22 @@ const inferredApi =
     : expoHost && expoHost !== "localhost" && expoHost !== "127.0.0.1"
       ? `http://${expoHost}:3000`
       : "";
-export const API = configuredApi || inferredApi;
+export let API = configuredApi || inferredApi;
+async function loadApiEndpoint() {
+  const configUrl = process.env.EXPO_PUBLIC_API_CONFIG_URL;
+  if (process.env.EXPO_PUBLIC_DEMO_MODE !== "true" || !configUrl) return;
+  try {
+    const response = await fetch(configUrl, {
+      cache: "no-store",
+      signal: AbortSignal.timeout(10000),
+    });
+    if (!response.ok) return;
+    const config = await response.json();
+    API = demoApiEndpoint(config.apiUrl);
+  } catch {
+    // The bundled endpoint remains available if the configuration host is offline.
+  }
+}
 let access = "",
   refresh = "",
   socket: Socket | undefined,
@@ -202,6 +218,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     let mounted = true;
     (async () => {
       try {
+        await loadApiEndpoint();
         const raw =
           Platform.OS === "web"
             ? null
