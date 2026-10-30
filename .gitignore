@@ -1,4 +1,5 @@
 node_modules/
+.vercel/
 dist/
 .expo/
 .env
@@ -17,3 +18,4 @@ dist/
 coverage/
 tmp/
 apps/mobile/web-build/
+.vercel

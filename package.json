@@ -8,6 +8,7 @@
     "api": "npm run dev -w apps/api",
     "mobile": "npm run start -w apps/mobile",
     "build": "npm run build -w apps/api",
+    "build:web": "npm run build:web -w apps/mobile",
     "typecheck": "npm run typecheck --workspaces",
     "test": "npm run test -w apps/api",
     "db:migrate": "npm run migrate -w apps/api",

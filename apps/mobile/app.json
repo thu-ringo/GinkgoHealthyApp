@@ -2,7 +2,10 @@
   "expo": {
     "name": "Ginkgo",
     "slug": "ginkgo",
-    "scheme": ["ginkgo", "healthycheck"],
+    "scheme": [
+      "ginkgo",
+      "healthycheck"
+    ],
     "icon": "./assets/ginkgo-icon.png",
     "version": "1.0.0",
     "orientation": "default",
@@ -18,7 +21,9 @@
         "monochromeImage": "./assets/ginkgo-adaptive.png",
         "backgroundColor": "#E8F3EA"
       },
-      "permissions": ["POST_NOTIFICATIONS"]
+      "permissions": [
+        "POST_NOTIFICATIONS"
+      ]
     },
     "plugins": [
       "expo-router",
@@ -29,8 +34,16 @@
       "expo-font"
     ],
     "web": {
+      "output": "single",
       "bundler": "metro",
       "favicon": "./assets/ginkgo-favicon.png"
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "13cf43ec-3218-4168-a4dd-5ab8a0eedff5"
+      }
+    },
+    "owner": "thuringo"
   }
 }

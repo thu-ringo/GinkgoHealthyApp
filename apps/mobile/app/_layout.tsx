@@ -1,7 +1,7 @@
 import React from "react";
 import { Stack } from "expo-router";
-import { Platform, View } from "react-native";
-import { SafeAreaProvider } from "react-native-safe-area-context";
+import { Platform, Text, View } from "react-native";
+import { SafeAreaProvider, useSafeAreaInsets } from "react-native-safe-area-context";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { StatusBar } from "expo-status-bar";
 import { useReducedMotion } from "../src/use-reduced-motion";
@@ -15,6 +15,7 @@ function Routes() {
   const a = useAuth();
   const onboarding = useOnboardingState();
   const reducedMotion = useReducedMotion();
+  const insets = useSafeAreaInsets();
   if (!a.ready || onboarding.completed == null)
     return (
       <Page>
@@ -38,6 +39,20 @@ function Routes() {
         backgroundColor: C.bg,
       }}
     >
+      {process.env.EXPO_PUBLIC_DEMO_MODE === "true" && (
+        <View
+          style={{
+            paddingTop: Math.max(insets.top, 8),
+            paddingBottom: 8,
+            paddingHorizontal: 16,
+            backgroundColor: "#FFF3CD",
+          }}
+        >
+          <Text style={{ color: "#664D03", fontSize: 12, textAlign: "center" }}>
+            Bản demo học tập · SMS thử · Chỉ dùng dữ liệu giả
+          </Text>
+        </View>
+      )}
       <Stack
         initialRouteName={
           onboarding.completed

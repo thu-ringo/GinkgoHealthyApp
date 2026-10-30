@@ -6,6 +6,10 @@ import { LinkOtpOwner1792500002000 } from "./migrations/1792500002000-LinkOtpOwn
 export const db = new DataSource({
   type: "mariadb",
   url: process.env.DATABASE_URL,
+  ssl:
+    process.env.DATABASE_SSL === "true"
+      ? { rejectUnauthorized: true, ca: process.env.DATABASE_SSL_CA || undefined }
+      : undefined,
   connectorPackage: "mysql2",
   synchronize: false,
   migrationsRun: false,

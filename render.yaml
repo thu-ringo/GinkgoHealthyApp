@@ -1,0 +1,32 @@
+services:
+  - type: web
+    name: ginkgo-demo-api
+    runtime: docker
+    plan: free
+    region: singapore
+    dockerfilePath: ./Dockerfile.api
+    dockerContext: .
+    dockerCommand: sh -c "node apps/api/dist/migrate.js && exec node apps/api/dist/main.js"
+    healthCheckPath: /health
+    autoDeployTrigger: off
+    envVars:
+      - key: NODE_ENV
+        value: development
+      - key: DATABASE_URL
+        sync: false
+      - key: DATABASE_SSL
+        value: "true"
+      - key: JWT_SECRET
+        generateValue: true
+      - key: OTP_PEPPER
+        generateValue: true
+      - key: CORS_ORIGINS
+        value: https://ginkgo-healthy-app.vercel.app
+      - key: SMS_PROVIDER
+        value: dev
+      - key: DEV_OTP_ENABLED
+        value: "true"
+      - key: DEV_OTP_CODE
+        value: "123456"
+      - key: DEMO_SEED_ENABLED
+        value: "false"

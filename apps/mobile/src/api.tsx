@@ -14,7 +14,9 @@ export const queryClient = new QueryClient({
 const configuredApi = process.env.EXPO_PUBLIC_API_URL?.trim();
 const expoHost = Constants.expoConfig?.hostUri?.split(":")[0];
 const inferredApi =
-  Platform.OS === "web"
+  !__DEV__
+    ? ""
+    : Platform.OS === "web"
     ? "http://localhost:3000"
     : expoHost && expoHost !== "localhost" && expoHost !== "127.0.0.1"
       ? `http://${expoHost}:3000`
